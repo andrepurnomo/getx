@@ -933,18 +933,21 @@ extension GetNavigationExt on GetInterface {
   /// [id] is for when you are using nested navigation,
   /// as explained in documentation
   void close<T extends Object>({
-    bool closeAll = true,
+    bool? closeAll,
     bool closeSnackbar = true,
     bool closeDialog = true,
     bool closeBottomSheet = true,
     String? id,
     T? result,
   }) {
+    // If result is provided, default to closing only one overlay (not all)
+    final effectiveCloseAll = closeAll ?? (result == null);
+    
     void handleClose(bool closeCondition, Function closeAllFunction,
         Function closeSingleFunction,
         [bool? isOpenCondition]) {
       if (closeCondition) {
-        if (closeAll) {
+        if (effectiveCloseAll) {
           closeAllFunction();
         } else if (isOpenCondition == true) {
           closeSingleFunction();
@@ -953,9 +956,22 @@ extension GetNavigationExt on GetInterface {
     }
 
     handleClose(closeSnackbar, closeAllSnackbars, closeCurrentSnackbar);
-    handleClose(closeDialog, closeAllDialogs, closeOverlay, isDialogOpen);
-    handleClose(closeBottomSheet, closeAllBottomSheets, closeOverlay,
-        isBottomSheetOpen);
+    
+    if (closeDialog) {
+      if (effectiveCloseAll) {
+        closeAllDialogs();
+      } else if (isDialogOpen == true) {
+        closeOverlay(id: id, result: result);
+      }
+    }
+    
+    if (closeBottomSheet) {
+      if (effectiveCloseAll) {
+        closeAllBottomSheets();
+      } else if (isBottomSheetOpen == true) {
+        closeOverlay(id: id, result: result);
+      }
+    }
   }
 
   /// **Navigation.pushReplacement()** shortcut .<br><br>

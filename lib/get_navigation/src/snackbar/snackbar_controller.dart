@@ -36,7 +36,7 @@ class SnackbarController {
   /// The animation controller that the route uses to drive the transitions.
   ///
   /// The animation itself is exposed by the [animation] property.
-  late final AnimationController _controller;
+  AnimationController? _controller;
 
   SnackbarStatus? _currentStatus;
 
@@ -116,7 +116,7 @@ class SnackbarController {
     _animation = _createAnimation();
     _animation.addStatusListener(_handleStatusChanged);
     _configureTimer();
-    _controller.forward();
+    _controller?.forward();
   }
 
   void _configureTimer() {
@@ -140,7 +140,7 @@ class SnackbarController {
         'Cannot create a animation from a disposed snackbar');
     return AlignmentTween(begin: _initialAlignment, end: _endAlignment).animate(
       CurvedAnimation(
-        parent: _controller,
+        parent: _controller!,
         curve: snackbar.forwardAnimationCurve,
         reverseCurve: snackbar.reverseAnimationCurve,
       ),
@@ -164,7 +164,7 @@ class SnackbarController {
   Animation<double> _createBlurFilterAnimation() {
     return Tween(begin: 0.0, end: snackbar.overlayBlur).animate(
       CurvedAnimation(
-        parent: _controller,
+        parent: _controller!,
         curve: const Interval(
           0.0,
           0.35,
@@ -179,7 +179,7 @@ class SnackbarController {
             begin: const Color(0x00000000), end: snackbar.overlayColor)
         .animate(
       CurvedAnimation(
-        parent: _controller,
+        parent: _controller!,
         curve: const Interval(
           0.0,
           0.35,
@@ -325,10 +325,12 @@ class SnackbarController {
     _cancelTimer();
 
     if (_wasDismissedBySwipe) {
-      Timer(const Duration(milliseconds: 200), _controller.reset);
+      if (_controller != null) {
+        Timer(const Duration(milliseconds: 200), _controller!.reset);
+      }
       _wasDismissedBySwipe = false;
     } else {
-      _controller.reverse();
+      _controller?.reverse();
     }
   }
 
@@ -341,7 +343,8 @@ class SnackbarController {
 
     assert(!_transitionCompleter.isCompleted,
         'Cannot remove overlay from a disposed snackbar');
-    _controller.dispose();
+    _controller?.dispose();
+    _controller = null;
     _overlayEntries.clear();
     _transitionCompleter.complete();
   }
@@ -387,15 +390,10 @@ class SnackBarQueue {
   void disposeControllers() {
     if (_currentSnackbar != null) {
       _currentSnackbar?._removeOverlay();
-      _currentSnackbar?._controller.dispose();
       _snackbarList.remove(_currentSnackbar);
     }
 
     _queue.cancelAllJobs();
-
-    for (var element in _snackbarList) {
-      element._controller.dispose();
-    }
     _snackbarList.clear();
   }
 
