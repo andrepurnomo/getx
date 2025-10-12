@@ -942,7 +942,7 @@ extension GetNavigationExt on GetInterface {
   }) {
     // If result is provided, default to closing only one overlay (not all)
     final effectiveCloseAll = closeAll ?? (result == null);
-    
+
     void handleClose(bool closeCondition, Function closeAllFunction,
         Function closeSingleFunction,
         [bool? isOpenCondition]) {
@@ -956,7 +956,7 @@ extension GetNavigationExt on GetInterface {
     }
 
     handleClose(closeSnackbar, closeAllSnackbars, closeCurrentSnackbar);
-    
+
     if (closeDialog) {
       if (effectiveCloseAll) {
         closeAllDialogs();
@@ -964,7 +964,7 @@ extension GetNavigationExt on GetInterface {
         closeOverlay(id: id, result: result);
       }
     }
-    
+
     if (closeBottomSheet) {
       if (effectiveCloseAll) {
         closeAllBottomSheets();

@@ -92,31 +92,63 @@ class SnackbarController {
   bool _isTesting = false;
 
   void _configureOverlay() {
-    final overlayContext = Get.overlayContext;
-    _isTesting = overlayContext == null;
-    _overlayState =
-        _isTesting ? OverlayState() : Overlay.of(Get.overlayContext!);
-    _overlayEntries.clear();
-    _overlayEntries.addAll(_createOverlayEntries(_getBodyWidget()));
-    if (!_isTesting) {
-      _overlayState!.insertAll(_overlayEntries);
-    }
+    try {
+      final overlayContext = Get.overlayContext;
+      _isTesting = overlayContext == null;
 
-    _configureSnackBarDisplay();
+      // BUG FIX: If no overlay context, complete immediately instead of hanging
+      if (_isTesting) {
+        if (!_transitionCompleter.isCompleted) {
+          _transitionCompleter.complete();
+        }
+        return;
+      }
+
+      // BUG FIX: Get overlay directly from NavigatorState instead of searching context tree
+      final navigatorState = Get.key.currentState;
+
+      if (navigatorState == null) {
+        if (!_transitionCompleter.isCompleted) {
+          _transitionCompleter.complete();
+        }
+        return;
+      }
+
+      _overlayState = navigatorState.overlay;
+      _overlayEntries.clear();
+      _overlayEntries.addAll(_createOverlayEntries(_getBodyWidget()));
+      _overlayState!.insertAll(_overlayEntries);
+
+      _configureSnackBarDisplay();
+    } catch (e) {
+      // BUG FIX: If overlay setup fails, complete to prevent hanging queue
+      if (!_transitionCompleter.isCompleted) {
+        _transitionCompleter.complete();
+      }
+    }
   }
 
   void _configureSnackBarDisplay() {
     assert(!_transitionCompleter.isCompleted,
         'Cannot configure a snackbar after disposing it.');
-    _controller = _createAnimationController();
-    _configureAlignment(snackbar.snackPosition);
-    _snackbarStatus = snackbar.snackbarStatus;
-    _filterBlurAnimation = _createBlurFilterAnimation();
-    _filterColorAnimation = _createColorOverlayColor();
-    _animation = _createAnimation();
-    _animation.addStatusListener(_handleStatusChanged);
-    _configureTimer();
-    _controller?.forward();
+
+    try {
+      _controller = _createAnimationController();
+      _configureAlignment(snackbar.snackPosition);
+      _snackbarStatus = snackbar.snackbarStatus;
+      _filterBlurAnimation = _createBlurFilterAnimation();
+      _filterColorAnimation = _createColorOverlayColor();
+      _animation = _createAnimation();
+      _animation.addStatusListener(_handleStatusChanged);
+      _configureTimer();
+      _controller?.forward();
+    } catch (e) {
+      // BUG FIX: If animation setup fails, complete to prevent hanging
+      if (!_transitionCompleter.isCompleted) {
+        _transitionCompleter.completeError(e);
+      }
+      rethrow;
+    }
   }
 
   void _configureTimer() {
@@ -382,7 +414,8 @@ class SnackBarQueue {
   }
 
   Future<void> cancelAllJobs() async {
-    await _currentSnackbar?.close();
+    // Force remove stuck snackbars without waiting
+    _currentSnackbar?.close(withAnimations: false);
     _queue.cancelAllJobs();
     _snackbarList.clear();
   }
