@@ -96,7 +96,7 @@ mixin RxObjectMixin<T> on GetListenable<T> {
 
   /// Updates the [value] and adds it to the stream, updating the observer
   /// Widget, only if it's different from the previous value.
-  /// 
+  ///
   /// Note: Uses `identical()` for object comparison to ensure different
   /// instances with same equality (e.g., same ID) are still updated.
   @override
