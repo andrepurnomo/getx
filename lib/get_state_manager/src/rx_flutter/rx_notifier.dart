@@ -157,7 +157,11 @@ class GetListenable<T> extends ListNotifierSingle implements RxInterface<T> {
   }
 
   set value(T newValue) {
-    if (_value == newValue) return;
+    // Use identical() for objects to ensure different instances are updated
+    // even if they have same equality (e.g., same ID in models)
+    final isPrimitive = newValue is num || newValue is String || newValue is bool;
+    final isSame = identical(_value, newValue) || (isPrimitive && _value == newValue);
+    if (isSame) return;
     _value = newValue;
     _notify();
   }

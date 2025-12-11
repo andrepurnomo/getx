@@ -96,11 +96,18 @@ mixin RxObjectMixin<T> on GetListenable<T> {
 
   /// Updates the [value] and adds it to the stream, updating the observer
   /// Widget, only if it's different from the previous value.
+  /// 
+  /// Note: Uses `identical()` for object comparison to ensure different
+  /// instances with same equality (e.g., same ID) are still updated.
   @override
   set value(T val) {
     if (isDisposed) return;
     sentToStream = false;
-    if (value == val && !firstRebuild) return;
+    // Use identical() for objects to detect different instances,
+    // fall back to == for primitives
+    final isPrimitive = val is num || val is String || val is bool;
+    final isSameValue = identical(value, val) || (isPrimitive && value == val);
+    if (isSameValue && !firstRebuild) return;
     firstRebuild = false;
     sentToStream = true;
     super.value = val;
