@@ -445,14 +445,14 @@ class GetRootState extends State<GetRoot> with WidgetsBindingObserver {
     final platform = context.theme.platform;
     final matchingTransition =
         Get.theme.pageTransitionsTheme.builders[platform];
-    switch (matchingTransition) {
-      case CupertinoPageTransitionsBuilder():
+    switch (matchingTransition.runtimeType.toString()) {
+      case 'CupertinoPageTransitionsBuilder':
         return Transition.cupertino;
-      case ZoomPageTransitionsBuilder():
+      case 'ZoomPageTransitionsBuilder':
         return Transition.zoom;
-      case FadeUpwardsPageTransitionsBuilder():
+      case 'FadeUpwardsPageTransitionsBuilder':
         return Transition.fade;
-      case OpenUpwardsPageTransitionsBuilder():
+      case 'OpenUpwardsPageTransitionsBuilder':
         return Transition.native;
       default:
         return null;
@@ -544,3 +544,4 @@ class GetRootState extends State<GetRoot> with WidgetsBindingObserver {
     return Uri.tryParse(name)?.toString() ?? name;
   }
 }
+
